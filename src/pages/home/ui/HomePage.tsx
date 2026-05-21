@@ -14,8 +14,6 @@ import {
   Dimensions,
 } from 'react-native';
 
-// Importamos las herramientas de gestos y animaciones avanzadas
-import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { 
   FadeIn,
   FadeInDown, 
@@ -38,10 +36,9 @@ const CARD_HEIGHT = 280; // Altura promedio estimada para los cálculos vectoria
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// --- TARJETA CON EFECTO TILT 3D RADICAL Y GLOW INTERNO ---
+// --- TARJETA CON EFECTO TILT 3D Y GLOW INTERNO ---
 function LugarListItem({ item, index, onPress, onDelete }: { item: any; index: number; onPress: () => void; onDelete: () => void }) {
   
-  // Valores compartidos para la rotación y el haz de luz
   const rotateX = useSharedValue(0);
   const rotateY = useSharedValue(0);
   const glowX = useSharedValue(CARD_WIDTH / 2);
@@ -49,46 +46,38 @@ function LugarListItem({ item, index, onPress, onDelete }: { item: any; index: n
   const glowOpacity = useSharedValue(0);
   const cardScale = useSharedValue(1);
 
-  // Configuración de muelles elásticos rápidos para máxima responsividad al tacto
   const springConfig = { damping: 12, stiffness: 120 };
 
-  const gesture = Gesture.Pan()
-    .onBegin((e) => {
-      cardScale.value = withSpring(0.96, springConfig);
-      glowOpacity.value = withSpring(0.8, springConfig);
-    })
-    .onUpdate((e) => {
-      // Determinamos el desfase del toque respecto al centro exacto (-0.5 a 0.5)
-      const px = (e.x / CARD_WIDTH) - 0.5;
-      const py = (e.y / CARD_HEIGHT) - 0.5;
+  const handlePressIn = (e: any) => {
+    const x = e.nativeEvent.locationX;
+    const y = e.nativeEvent.locationY;
+    const px = (x / CARD_WIDTH) - 0.5;
+    const py = (y / CARD_HEIGHT) - 0.5;
 
-      // Inclinación física de hasta 25 grados para que se note en cualquier pantalla
-      rotateX.value = interpolate(py, [-0.5, 0.5], [25, -25]);
-      rotateY.value = interpolate(px, [-0.5, 0.5], [-25, 25]);
+    rotateX.value = withSpring(interpolate(py, [-0.5, 0.5], [25, -25]), springConfig);
+    rotateY.value = withSpring(interpolate(px, [-0.5, 0.5], [-25, 25]), springConfig);
+    cardScale.value = withSpring(0.96, springConfig);
+    glowX.value = x;
+    glowY.value = y;
+    glowOpacity.value = withSpring(0.8, springConfig);
+  };
 
-      // Coordenadas dinámicas del reflejo de luz
-      glowX.value = e.x;
-      glowY.value = e.y;
-    })
-    .onFinalize(() => {
-      // Retorno suave a posición neutra
-      rotateX.value = withSpring(0, springConfig);
-      rotateY.value = withSpring(0, springConfig);
-      cardScale.value = withSpring(1, springConfig);
-      glowOpacity.value = withSpring(0, springConfig);
-    });
+  const handlePressOut = () => {
+    rotateX.value = withSpring(0, springConfig);
+    rotateY.value = withSpring(0, springConfig);
+    cardScale.value = withSpring(1, springConfig);
+    glowOpacity.value = withSpring(0, springConfig);
+  };
 
-  // Estilo animado para la perspectiva e inclinación tridimensional
   const animatedCardStyle = useAnimatedStyle(() => ({
     transform: [
-      { perspective: 400 }, // Perspectiva angular fuerte para acentuar el 3D
+      { perspective: 400 },
       { rotateX: `${rotateX.value}deg` },
       { rotateY: `${rotateY.value}deg` },
       { scale: cardScale.value }
     ],
   }));
 
-  // Estilo animado para el haz de luz reflectivo blanco
   const animatedGlowStyle = useAnimatedStyle(() => ({
     position: 'absolute',
     top: glowY.value - 120,
@@ -96,7 +85,7 @@ function LugarListItem({ item, index, onPress, onDelete }: { item: any; index: n
     width: 240,
     height: 240,
     borderRadius: 120,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)', // Brillo blanco tipo cristal
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
     opacity: glowOpacity.value,
   }));
 
@@ -105,46 +94,47 @@ function LugarListItem({ item, index, onPress, onDelete }: { item: any; index: n
       entering={FadeInDown.duration(400).delay(index * 80).springify().dampingRatio(0.85)}
       style={styles.cardContainerWrapper}
     >
-      <GestureDetector gesture={gesture}>
-        <AnimatedPressable onPress={onPress} style={[styles.lugarCard, animatedCardStyle]}>
-          {item.photo_uri && (
-            <Image source={{ uri: item.photo_uri }} style={styles.lugarImage} />
-          )}
-          
-          <View style={styles.lugarContent}>
-            <View style={styles.lugarTitleRow}>
-              <Text style={styles.lugarTitle}>{item.name}</Text>
-              
-              {/* Botón de eliminar con TouchableOpacity para aislarlo del gesto de arrastre */}
-              <TouchableOpacity
-                onPress={onDelete}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={styles.deleteIconBtn}
-              >
-                <Entypo name="trash" size={22} color={theme.colors.danger} />
-              </TouchableOpacity>
-            </View>
-
-            {(item.city || item.country) && (
-              <View style={styles.locationRow}>
-                <Ionicons name="location-outline" size={18} color={theme.colors.accent} />
-                <Text style={styles.locationText}>
-                  {[item.city, item.country].filter(Boolean).join(', ')}
-                </Text>
-              </View>
-            )}
+      <AnimatedPressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={onPress}
+        style={[styles.lugarCard, animatedCardStyle]}
+      >
+        {item.photo_uri && (
+          <Image source={{ uri: item.photo_uri }} style={styles.lugarImage} />
+        )}
+        
+        <View style={styles.lugarContent}>
+          <View style={styles.lugarTitleRow}>
+            <Text style={styles.lugarTitle}>{item.name}</Text>
             
-            {item.latitude && item.longitude && (
-              <Text style={styles.coords}>
-                {item.latitude.toFixed(4)}, {item.longitude.toFixed(4)}
-              </Text>
-            )}
+            <TouchableOpacity
+              onPress={onDelete}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.deleteIconBtn}
+            >
+              <Entypo name="trash" size={22} color={theme.colors.danger} />
+            </TouchableOpacity>
           </View>
 
-          {/* El brillo se renderiza al final dentro de la tarjeta para respetar el overflow: 'hidden' */}
-          <Animated.View style={animatedGlowStyle} pointerEvents="none" />
-        </AnimatedPressable>
-      </GestureDetector>
+          {(item.city || item.country) && (
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={18} color={theme.colors.accent} />
+              <Text style={styles.locationText}>
+                {[item.city, item.country].filter(Boolean).join(', ')}
+              </Text>
+            </View>
+          )}
+          
+          {item.latitude && item.longitude && (
+            <Text style={styles.coords}>
+              {item.latitude.toFixed(4)}, {item.longitude.toFixed(4)}
+            </Text>
+          )}
+        </View>
+
+        <Animated.View style={animatedGlowStyle} pointerEvents="none" />
+      </AnimatedPressable>
     </Animated.View>
   );
 }
@@ -209,8 +199,7 @@ export default function HomePage() {
   };
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Animated.View entering={FadeIn.duration(400)} style={styles.container}>
+    <Animated.View entering={FadeIn.duration(400)} style={styles.container}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scroll}
@@ -293,7 +282,6 @@ export default function HomePage() {
           />
         </ScrollView>
       </Animated.View>
-    </GestureHandlerRootView>
   );
 }
 

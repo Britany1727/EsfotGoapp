@@ -1,7 +1,15 @@
 import { useState } from "react";
 import {
-  View, Text, StyleSheet, KeyboardAvoidingView,
-  Alert, TouchableOpacity, ScrollView, ActivityIndicator, Platform, Image
+  View,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Alert,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Platform,
+  Image
 } from "react-native";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -112,10 +120,11 @@ export const LoginPage = () => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="height">
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.card}>
           {/* Header */}
@@ -139,35 +148,38 @@ export const LoginPage = () => {
               placeholder="tu@correo.com"
             />
 
-            <Input
-              label="Contraseña"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholder="Tu contraseña"
-            />
+            <View style={styles.passwordWrapper}>
+              <Input
+                label="Contraseña"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                placeholder="Tu contraseña"
+              />
+              <TouchableOpacity
+                onPress={() => router.push("/(auth)/forgot-password")}
+                style={styles.forgotPasswordTouch}
+              >
+                <Text style={styles.link}>¿Olvidaste tu contraseña?</Text>
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
-              onPress={() => router.push("/(auth)/forgot-password")}
-              style={{ alignSelf: "flex-end" }}
-            >
-              <Text style={styles.link}>¿Olvidaste tu contraseña?</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonShadowWrapper}>
+              <Button
+                onPress={handleLogin}
+                isLoading={login.isPending}
+                label="Iniciar sesión"
+              />
+            </View>
 
-            <Button
-              onPress={handleLogin}
-              isLoading={login.isPending}
-              label="Iniciar sesión"
-            />
-
-            {/* Separador */}
+            {/* Separador Estilizado */}
             <View style={styles.dividerContainer}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>o bien</Text>
               <View style={styles.dividerLine} />
             </View>
 
-            {/* Botón Google Integrado con Imagen */}
+            {/* Botón Google Integrado con Contorno Azul Sutil y Sombras Profundas */}
             <TouchableOpacity
               style={[
                 styles.googleButton,
@@ -192,11 +204,11 @@ export const LoginPage = () => {
 
             <TouchableOpacity
               onPress={() => router.push("/(auth)/register")}
-              style={{ alignItems: "center", marginTop: 8 }}
+              style={styles.registerLinkContainer}
             >
               <Text style={styles.linkMuted}>
                 ¿No tienes cuenta?{" "}
-                <Text style={{ color: theme.colors.primary, fontWeight: "700" }}>
+                <Text style={styles.registerHighlight}>
                   Regístrate
                 </Text>
               </Text>
@@ -209,60 +221,146 @@ export const LoginPage = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.bg },
-  scroll: { flexGrow: 1, justifyContent: "center", padding: 24 },
+  container: { 
+    flex: 1, 
+    backgroundColor: theme.colors.bg 
+  },
+  scroll: { 
+    flexGrow: 1, 
+    justifyContent: "center", 
+    padding: 24 
+  },
+  
+  // --- TARJETA PRINCIPAL CON PROFUNDIDAD AZUL ---
   card: {
     backgroundColor: theme.colors.card,
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: "hidden",
-    ...theme.shadow.card,
+    borderWidth: 1.5,
+    borderColor: "rgba(59, 130, 246, 0.2)", // Haz de contorno azul delgado
+
+    // Sombra de alta dispersión
+    shadowColor: "#3b82f6",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 6,
   },
   header: {
     backgroundColor: theme.colors.primary,
-    padding: 32,
+    paddingVertical: 40,
+    paddingHorizontal: 32,
     alignItems: "center",
   },
   logoImage: { 
     width: 200, 
     height: 200, 
-    marginBottom: 12 
+    marginBottom: 5
   },
-  title: { color: "#fff", fontSize: 26, fontWeight: "700", marginBottom: 4 },
-  subtitle: { color: "rgba(255,255,255,0.75)", fontSize: 14 },
-  form: { padding: 28, gap: 16 },
-  link: { color: theme.colors.accent, fontSize: 14 },
-  linkMuted: { color: theme.colors.textMuted, fontSize: 14 },
+  title: { 
+    color: "#fff", 
+    fontSize: 28, 
+    fontWeight: "800", 
+    marginBottom: 6,
+    letterSpacing: 0.5
+  },
+  subtitle: { 
+    color: "rgba(255,255,255,0.8)", 
+    fontSize: 15,
+    fontWeight: "500"
+  },
+  form: { 
+    padding: 28, 
+    gap: 20 
+  },
+  passwordWrapper: {
+    gap: 8
+  },
+  forgotPasswordTouch: {
+    alignSelf: "flex-end",
+    paddingVertical: 2
+  },
+  link: { 
+    color: theme.colors.accent, 
+    fontSize: 14,
+    fontWeight: "600" 
+  },
+  linkMuted: { 
+    color: theme.colors.textMuted, 
+    fontSize: 14 
+  },
+  
+  // Sombra envolvente para el botón principal
+  buttonShadowWrapper: {
+    marginTop: 4,
+    borderRadius: 12,
+    shadowColor: "#3b82f6",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+
+  // --- SEPARADOR INTERACTIVO ---
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 4,
+    marginVertical: 6,
   },
-  dividerLine: { flex: 1, height: 1, backgroundColor: "rgba(0,0,0,0.1)" },
-  dividerText: { color: theme.colors.textMuted, paddingHorizontal: 10, fontSize: 14 },
+  dividerLine: { 
+    flex: 1, 
+    height: 1, 
+    backgroundColor: "rgba(59, 130, 246, 0.15)" 
+  },
+  dividerText: { 
+    color: theme.colors.textMuted, 
+    paddingHorizontal: 12, 
+    fontSize: 14,
+    fontWeight: "500"
+  },
+
+  // --- BOTÓN GOOGLE REDISEÑADO ---
   googleButton: {
     backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
+    borderWidth: 1.5,
+    borderColor: "rgba(59, 130, 246, 0.25)", // Glow sutil azulado en contorno
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    
+    // Configuración de profundidad avanzada
+    shadowColor: "#3b82f6",
+    shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 7,
+    elevation: 4,
   },
   googleContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: 8,
   },
   googleIcon: {
     width: 40,
     height: 40,
   },
-  googleButtonText: { color: "#111", fontSize: 16, fontWeight: "600" },
-  disabledButton: { opacity: 0.6 },
+  googleButtonText: { 
+    color: "#111", 
+    fontSize: 16, 
+    fontWeight: "600" 
+  },
+  disabledButton: { 
+    opacity: 0.6 
+  },
+  registerLinkContainer: {
+    alignItems: "center", 
+    marginTop: 10,
+    paddingVertical: 4
+  },
+  registerHighlight: { 
+    color: theme.colors.primary, 
+    fontWeight: "800" 
+  }
 });
