@@ -4,7 +4,7 @@
     "slug": "auth-ESFOT",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./src/assets/logo.png",
     "scheme": "authesfot",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -50,7 +50,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "f505ea21-f892-43a8-bc32-6c674b04dff9"
+        "projectId": "794818af-c827-451d-a131-2017e12a2c18"
       }
     }
   }
